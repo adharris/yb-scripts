@@ -1,0 +1,107 @@
+import sys
+from helpers import get_config, do_curl
+from simplejson import loads as parse_json 
+from pprint import pprint
+from drupal import get_site, get_sites
+from civicrm import civicrm_api
+from notifications import notify
+from datetime import date 
+from sh import clear
+
+config = get_config("webstaq")
+
+def sync_site(site_id):
+  site = get_site(site_id)
+
+  if 'affiliation' in site:
+    site['affiliationStatus'] = {'1': "Provisional",
+                                 '2': "Affiliate",
+                                 '3': "Accredited"}[site['affiliation']]
+    site['affiliate'] = 1
+  else:
+    site['affiliationStatus'] = 'No'
+    site['affiliate'] = 0
+
+  grants = {}
+  if 'grants' in site:
+    for i, grant in enumerate(site['grants']):
+      grants['grant_%s_id'   % i] = grant['id']
+      grants['grant_%s_name' % i] = grant['name']
+      grants['grant_%s_year' % i] = grant['year']
+    del site['grants']
+
+  inits = {}
+  if 'initiatives' in site:
+    for i, init in enumerate(site['initiatives']):
+      inits['init_%s_id'   % i] = init['id']
+      inits['init_%s_name' % i] = init['name']
+    del site['initiatives']
+
+  args = {
+    'siteId'            : site['site_id'],
+    'organizationName'  : site['name'], 
+    'sponsoringOrgName' : site['sponsor'] if 'sponsor' in site else '',
+    'city'              : site['city'],
+    'state'             : site['state'],
+    'status'            : site['status'],
+    'affiliate'         : site['affiliate'],
+    'affiliationStatus' : site['affiliationStatus'],
+  }
+  args = dict(args, **grants)
+  args = dict(args, **inits)
+
+  result = do_curl(config['update_site_url'], key=config['key'], **args)
+  result = parse_json(str(result))
+  result['site'] = site
+  return result
+
+def update_line(s):
+  sys.stdout.write("\r{0}{1}".format(s, " " * (80 - len(s))))
+  sys.stdout.flush()
+
+def sync_sites():
+  results = {}
+  update_line("Getting sites... (0%)")
+  sites = get_sites()
+  sites = filter(lambda site: not site['site_id'] is None, sites)
+  for i, site in enumerate(sites):
+    try:
+      update_line("%s... (%s%%)" % (site['name'], i * 1000 / len(sites) / 10.0))
+      result = sync_site(site['site_id'])
+      include = False
+      data = {}
+      for key, value in result.iteritems():
+        if key == 'initiatives':
+          if len(value['to_add']) > 0:
+            data['new_initiatives'] = value['to_add']
+          if len(value['to_remove']) > 0:
+            data['old_initiatives'] = value['to_remove']
+        elif key == 'grants':
+          added_grants = list(k for k, v in value.iteritems() if v == 1)
+          if len(added_grants) > 0:
+            data['added_grants'] = added_grants 
+        elif key == 'removed_grants':
+          if len(value) > 0:
+            data['removed_grants'] = value
+        elif value == 1:
+          if not 'fields' in data:
+            data['fields'] = list()
+          data['fields'].append(key)
+      if len(data) > 0:
+        data['site_name'] = site['name']
+        results[site['id']] = data
+    except Exception as e:
+      line = sys.exc_info()[-1].tb_lineno
+      messsage = '%s: %s (line %s)\n#%s %s' % (type(e).__name__, str(e), line, site['site_id'], site['name'])
+      notify('site_sync_error', messsage, title='Site Sync Error', app='webstaq')
+
+  notify('site_sync', "Site Sync completed successfully, %s site%s with changes" % (len(results), 's' if len(results) != 1 else ''), 
+      app='webstaq',
+      title='WebSTA-Q Site Sync',
+      subject='WebSTA-Q Site Sync %s' % str(date.today()),
+      data=results
+    )
+
+sync_sites()
+
+
