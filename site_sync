@@ -14,6 +14,9 @@ config = get_config("webstaq")
 
 def sync_site(site_id):
   site = get_site(site_id)
+  
+  if site_id != site['site_id']:
+    return {}
 
   if 'affiliation' in site:
     site['affiliationStatus'] = {'1': "Provisional",
