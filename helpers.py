@@ -19,6 +19,17 @@ def do_curl(url, **kw):
 def get_config(section):
   return yaml.load(file('script_settings.yaml', 'r'))[section]
 
+def split_params(params):
+  results = dict()
+  params = filter(lambda param: '=' in param, params)
+  for param in params:
+    try:
+      k, v = param.split("=")
+      results[k] = v
+    except ValueError:
+      pass
+  return results
+
 class memoized(object):
    '''Decorator. Caches a function's return value each time it is called.
    If called later with the same arguments, the cached value is returned

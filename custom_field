@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+
 from civicrm import civicrm_api
 from helpers import get_config
 from notifications import notify
 from pprint import pprint
+from itertools import chain
 import yaml
 from sh import ssh, grep, xargs, drush
 
@@ -20,8 +23,10 @@ def check_custom_fields():
       else:
         failed.append("%s (%s) is missing for %s" % params)
 
+  for s in chain(passed, failed):
+    print s
+
   if len(failed) > 0:
-    pprint(failed)
     server = get_config('server')
 
     actions = list()
@@ -39,4 +44,5 @@ def check_custom_fields():
     }
     notify('custom_field', 'Custom Fields are not working', app='civicrm', **args)
 
-check_custom_fields()
+if __name__ == "__main__":
+  check_custom_fields()
