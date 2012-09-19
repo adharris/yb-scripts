@@ -3,6 +3,7 @@ from urllib import urlencode
 import yaml
 import collections
 import functools
+import os
 
 
 def do_curl(url, **kw):
@@ -17,7 +18,7 @@ def do_curl(url, **kw):
   return curl(url, **args)
 
 def get_config(section):
-  return yaml.load(file('script_settings.yaml', 'r'))[section]
+  return yaml.load(file(os.path.dirname(__file__) + '/script_settings.yaml', 'r'))[section]
 
 def split_params(params):
   results = dict()
