@@ -55,7 +55,7 @@ def send_email(user, event, message, **kw):
       p.text(message)
 
   ip = curl('ifconfig.me').strip()
-  if ip != config['ip']
+  if ip != config['ip']:
     ybdst = ssh.bake(config['ip'])
     print "Sent %s email to %s" % (event, user)
     return ybdst.sendemail(_in=str(body), **args)

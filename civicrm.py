@@ -2,7 +2,7 @@ import yaml
 import simplejson
 from helpers import do_curl, get_config 
 
-config = get_config['civicrm']
+config = get_config('civicrm')
 
 def civicrm_api(entity, action, **kwargs):
   params = {
