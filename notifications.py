@@ -42,18 +42,24 @@ def send_pushover(user, event, message, **kw):
 def send_email(user, event, message, **kw):
   if not user in config['email']['user_emails']:
     return
+
   args = {
     'f': config['email']['from_address'],
     't': config['email']['user_emails'][user],
     'u': kw['subject'] if 'subject' in kw else 'Notification',
   }
+
   if not 'app' in kw:
     kw['app'] = config['default_app']
+
   body = HTML('html')
   tr = body.table().tr()
   tr.td(valign='top').img(src=config['icons'][kw['app']], style='float:left; margin: 15px')
   try:
-    getattr(notifications, event + '_email')(tr.td(), message, **kw)
+    if 'email_body' in kw:
+      tr.td().text(kw['email_body'], escape=False)
+    else:
+      getattr(notifications, event + '_email')(tr.td(), message, **kw)
   except:
     with tr.td().p(style='margin-top: 15px') as p:
       p.b("Message:")

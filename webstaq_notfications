@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+
+from helpers import get_config, do_curl
+from simplejson import loads as parse_json
+from notifications import notify
+from pprint import pprint
+
+webstaq = get_config('webstaq')
+
+def process_notification(notification_id):
+  data = do_curl(webstaq['notification_url'], key=webstaq['key'], id=notification_id)
+  data = parse_json(data.strip())
+
+  event_type = data.pop('type')
+  message = data.pop('message')
+  args = data.pop('params')
+
+  if u'email_body' in args:
+    body = do_curl(webstaq['notification_url'], key=webstaq['key'], id=notification_id, email_body=1) 
+    args['email_body'] = body.strip()
+
+  notify(event_type, message, **args)
+
+
+def main(args):
+  process_notification(1)
+
+if __name__ == '__main__':
+  from sys import argv
+  main(argv[1:])

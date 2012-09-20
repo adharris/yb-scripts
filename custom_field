@@ -6,7 +6,7 @@ from notifications import notify
 from pprint import pprint
 from itertools import chain
 import yaml
-from sh import ssh
+from sh import shs
 
 config = get_config('custom_field')
 
