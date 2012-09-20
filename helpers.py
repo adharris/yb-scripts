@@ -6,7 +6,7 @@ import functools
 import os
 
 
-def do_curl(url, **kw):
+def do_curl(_url, **kw):
   args = {}
   if 'cookie' in kw:
     cookie = kw['cookie']
@@ -15,7 +15,7 @@ def do_curl(url, **kw):
   data = urlencode(kw)
   if len(kw) > 0:
     args['d'] = data
-  return curl(url, **args)
+  return curl(_url, **args)
 
 def get_config(section):
   return yaml.load(file(os.path.dirname(__file__) + '/script_settings.yaml', 'r'))[section]
