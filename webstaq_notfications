@@ -11,9 +11,12 @@ def process_notification(notification_id):
   data = do_curl(webstaq['notification_url'], key=webstaq['key'], id=notification_id)
   data = parse_json(data.strip())
 
-  event_type = data.pop('type')
-  message = data.pop('message')
-  args = data.pop('params')
+  try:
+    event_type = data.pop('type')
+    message = data.pop('message')
+    args = data.pop('params')
+  except KeyError:
+    return
 
   if u'email_body' in args:
     body = do_curl(webstaq['notification_url'], key=webstaq['key'], id=notification_id, email_body=1) 
@@ -21,9 +24,14 @@ def process_notification(notification_id):
 
   notify(event_type, message, **args)
 
+def process_notifications():
+  data = do_curl(webstaq['notification_url'], key=webstaq['key'])
+  data = parse_json(data.strip())
+  for notification_id in data:
+    process_notification(notification_id)
 
 def main(args):
-  process_notification(1)
+  process_notifications()
 
 if __name__ == '__main__':
   from sys import argv
