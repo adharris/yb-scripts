@@ -26,6 +26,7 @@ def process_notification(notification_id):
 
 def process_notifications():
   data = do_curl(webstaq['notification_url'], key=webstaq['key'])
+  pprint(data)
   data = parse_json(data.strip())
   for notification_id in data:
     process_notification(notification_id)
