@@ -67,7 +67,7 @@ def sync_sites(arg_sites):
   results = {}
   update_line("Getting sites...", 0.0)
   sites = get_sites()
-  sites = filter(lambda site: not site['site_id'] is None, sites)[4:7]
+  sites = filter(lambda site: not site['site_id'] is None, sites)
   if len(arg_sites) > 0:
     sites = filter(lambda site: site['site_id'] in arg_sites, sites)
   for i, site in enumerate(sites):
